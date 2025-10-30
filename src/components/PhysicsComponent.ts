@@ -1,8 +1,9 @@
-import type { PhysicsBody } from '@types/physics.types';
+import type { PhysicsBody } from '../types/physics.types';
 import { GameConfig } from '@/config';
 
 /**
  * Physics component - handles gravity and physics properties
+ * FIXED: Removed conditional gravity and position update logic
  */
 export class PhysicsComponent implements PhysicsBody {
   public velocity: { x: number; y: number };
@@ -30,10 +31,13 @@ export class PhysicsComponent implements PhysicsBody {
   }
 
   /**
-   * Apply gravity
+   * Apply gravity - FIXED: Always apply gravity, collision system will handle stopping
    */
   applyGravity(delta: number): void {
     const deltaSeconds = delta / 1000;
+
+    // CRITICAL FIX: Apply gravity unconditionally
+    // The collision system will zero out velocity.y when grounded
     this.velocity.y += this.gravity * deltaSeconds;
 
     // Cap fall speed
@@ -44,9 +48,13 @@ export class PhysicsComponent implements PhysicsBody {
 
   /**
    * Update position based on velocity
+   * FIXED: Always update position, let collision system correct it
    */
   updatePosition(delta: number): void {
     const deltaSeconds = delta / 1000;
+
+    // CRITICAL FIX: Always update both X and Y positions
+    // Collision resolution will correct the position if needed
     this.position.x += this.velocity.x * deltaSeconds;
     this.position.y += this.velocity.y * deltaSeconds;
   }

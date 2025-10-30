@@ -11,15 +11,15 @@ export const GameConfig = {
   PIXEL_ART: true,
 
   // Physics settings
-  GRAVITY: 1200,
-  MAX_VELOCITY_Y: 1000,
+  GRAVITY: 980,
+  MAX_VELOCITY_Y: 800,
 
   // Player settings
   PLAYER: {
-    ACCELERATION: 800,
-    MAX_SPEED: 200,
-    FRICTION: 800,
-    JUMP_VELOCITY: -450,
+    ACCELERATION: 1000,
+    MAX_SPEED: 250,
+    FRICTION: 1000,
+    JUMP_VELOCITY: -500,
     COYOTE_TIME_MS: 100, // 6 frames at 60fps
     JUMP_BUFFER_MS: 100,
     SIZE: { width: 32, height: 48 },
@@ -45,6 +45,7 @@ export const GameConfig = {
 
 /**
  * Scene keys for scene management
+ * FIXED: Added PAUSE scene key
  */
 export const SceneKeys = {
   BOOT: 'BootScene',

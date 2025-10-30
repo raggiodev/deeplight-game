@@ -4,10 +4,12 @@ import { BootScene } from '@scenes/BootScene';
 import { MainMenuScene } from '@scenes/MainMenuScene';
 import { GameScene } from '@scenes/GameScene';
 import { UIScene } from '@scenes/UIScene';
+import { PauseScene } from '@scenes/PauseScene';
 import { Logger } from './Logger';
 
 /**
  * Main game class - bootstraps Phaser and manages game lifecycle
+ * FIXED: Added PauseScene to scene list
  */
 export class Game extends Phaser.Game {
   private logger: Logger;
@@ -37,7 +39,8 @@ export class Game extends Phaser.Game {
       input: {
         gamepad: true,
       },
-      scene: [BootScene, MainMenuScene, GameScene, UIScene],
+      // FIXED: Added PauseScene
+      scene: [BootScene, MainMenuScene, GameScene, UIScene, PauseScene],
     };
 
     super(config);

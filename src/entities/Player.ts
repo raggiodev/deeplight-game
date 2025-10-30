@@ -9,6 +9,7 @@ import { Logger } from '@core/Logger';
 
 /**
  * Player entity - main character controlled by the player
+ * FIXED: Reordered update cycle to fix collision detection
  */
 export class Player extends Entity {
   private movement: MovementComponent;
@@ -55,18 +56,19 @@ export class Player extends Entity {
     // Update movement component
     this.movement.updateCoyoteTime(delta);
 
-    // Apply physics
+    // Apply physics (gravity)
     this.physics.applyGravity(delta);
 
     // Update velocity from movement component
     this.physics.velocity.x = this.movement.velocity.x;
     this.physics.velocity.y = this.movement.velocity.y;
 
-    // Update position
+    // CRITICAL FIX: Update position BEFORE collision resolution
+    // This allows the collision system to correct the position
     this.physics.updatePosition(delta);
 
-    // Update sprite position
-    this.sprite.setPosition(this.physics.position.x, this.physics.position.y);
+    // NOTE: Collision resolution happens in GameScene.handleCollisions()
+    // After collision, sprite position is synced in syncSpritePosition()
 
     // Update sprite facing direction
     if (this.physics.velocity.x > 0 && !this.facingRight) {
@@ -84,6 +86,14 @@ export class Player extends Entity {
     if (this.jumpBufferTime > 0) {
       this.jumpBufferTime -= delta;
     }
+  }
+
+  /**
+   * FIXED: New method to sync sprite position after collision resolution
+   * This ensures sprite displays at the corrected physics position
+   */
+  syncSpritePosition(): void {
+    this.sprite.setPosition(this.physics.position.x, this.physics.position.y);
   }
 
   private handleMovementInput(delta: number): void {

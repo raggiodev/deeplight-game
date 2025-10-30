@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { IEntity } from '@types/game.types';
+import type { IEntity } from '../types/game.types';
 
 /**
  * Base entity class that all game entities inherit from

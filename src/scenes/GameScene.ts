@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SceneKeys, GameConfig } from '@/config';
+import { SceneKeys, GameConfig, InputActions } from '@/config';
 import { Logger } from '@core/Logger';
 import { InputManager } from '@core/InputManager';
 import { CameraSystem } from '@systems/CameraSystem';
@@ -10,6 +10,7 @@ import { TILE_SIZE } from '@utils/constants';
 
 /**
  * Main game scene where gameplay happens
+ * FIXED: Simplified collision handling
  */
 export class GameScene extends Phaser.Scene {
   private logger: Logger;
@@ -19,6 +20,7 @@ export class GameScene extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap;
   private groundLayer!: Phaser.Tilemaps.TilemapLayer;
   private uiScene!: UIScene;
+  private isPaused: boolean = false;
 
   constructor() {
     super({ key: SceneKeys.GAME });
@@ -34,8 +36,8 @@ export class GameScene extends Phaser.Scene {
     // Create test level
     this.createTestLevel();
 
-    // Create player
-    this.player = new Player(this, 200, 300, this.inputManager);
+    // Create player - FIXED: Start at Y=100 (above ground) to test falling
+    this.player = new Player(this, 200, 100, this.inputManager);
 
     // Setup camera
     this.cameraSystem = new CameraSystem(this.cameras.main);
@@ -49,11 +51,25 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    // Check for pause input
+    if (this.inputManager.justPressed(InputActions.PAUSE)) {
+      this.togglePause();
+      return;
+    }
+
+    // Don't update if paused
+    if (this.isPaused) {
+      return;
+    }
+
     // Update player
     this.player.update(time, delta);
 
-    // Handle collisions
+    // FIXED: Handle collisions AFTER player physics update
     this.handleCollisions();
+
+    // FIXED: Sync sprite position AFTER collision resolution
+    this.player.syncSpritePosition();
 
     // Update camera
     this.cameraSystem.update();
@@ -64,12 +80,30 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Toggle pause state
+   */
+  private togglePause(): void {
+    if (this.isPaused) {
+      // Resume
+      this.isPaused = false;
+      this.scene.resume(SceneKeys.GAME);
+      this.scene.stop(SceneKeys.PAUSE);
+      this.logger.info('Game resumed');
+    } else {
+      // Pause
+      this.isPaused = true;
+      this.scene.pause(SceneKeys.GAME);
+      this.scene.launch(SceneKeys.PAUSE);
+      this.logger.info('Game paused');
+    }
+  }
+
+  /**
    * Create a test level with platforms
    */
   private createTestLevel(): void {
-    // Create tilemap (programmatic for now, will be replaced with Tiled maps later)
-    const mapWidth = 40; // tiles
-    const mapHeight = 23; // tiles
+    const mapWidth = 40;
+    const mapHeight = 23;
 
     this.map = this.make.tilemap({
       tileWidth: TILE_SIZE,
@@ -78,7 +112,6 @@ export class GameScene extends Phaser.Scene {
       height: mapHeight,
     });
 
-    // Add tileset
     const tiles = this.map.addTilesetImage('tile-ground', 'tile-ground');
 
     if (!tiles) {
@@ -86,13 +119,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // Create layer
     this.groundLayer = this.map.createBlankLayer('Ground', tiles)!;
-
-    // Build test level layout
     this.buildTestRoom(mapWidth, mapHeight);
-
-    // Set collision on all tiles
     this.groundLayer.setCollisionByExclusion([-1]);
 
     // Visual debug
@@ -155,6 +183,7 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Handle player collisions with tilemap
+   * FIXED: Simplified collision handling
    */
   private handleCollisions(): void {
     const playerBody = this.player.getPhysicsBody();
@@ -168,6 +197,7 @@ export class GameScene extends Phaser.Scene {
     // Trigger landing event if just became grounded
     if (!wasGrounded && playerBody.grounded) {
       this.player.onLand();
+      this.logger.info('Player landed!');
     }
   }
 }

@@ -1,4 +1,4 @@
-import type { MovementParams } from '@types/physics.types';
+import type { MovementParams } from '../types/physics.types';
 import { GameConfig } from '@/config';
 import { applyFriction } from '@utils/math.utils';
 

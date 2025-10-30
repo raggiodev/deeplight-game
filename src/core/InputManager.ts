@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { InputActions } from '@/config';
-import type { InputState, InputBinding, InputConfig } from '@types/input.types';
+import type { InputState, InputBinding, InputConfig } from '../types/input.types';
 import { Logger } from './Logger';
 
 /**
