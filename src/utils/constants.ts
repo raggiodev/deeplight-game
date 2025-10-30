@@ -14,6 +14,7 @@ export const COLLISION_CATEGORY = {
 } as const;
 
 export const PHYSICS_EPSILON = 0.001;
+export const GRAVITY = 980; // pixels per second squared
 
 export const ANIMATION_FRAME_RATE = {
   IDLE: 8,
