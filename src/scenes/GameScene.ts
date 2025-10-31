@@ -36,8 +36,13 @@ export class GameScene extends Phaser.Scene {
     // Create test level
     this.createTestLevel();
 
-    // Create player - FIXED: Start at Y=100 (above ground) to test falling
-    this.player = new Player(this, 200, 100, this.inputManager);
+    // Create player at a posición elevada para probar la caída
+    this.player = new Player(this, 200, 200, this.inputManager);
+
+    // Asegurar que el jugador comienza con velocidad cero
+    const playerPhysics = this.player.getPhysicsBody();
+    playerPhysics.velocity.x = 0;
+    playerPhysics.velocity.y = 0;
 
     // Setup camera
     this.cameraSystem = new CameraSystem(this.cameras.main);

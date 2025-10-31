@@ -1,6 +1,12 @@
 import type { PhysicsBody, CollisionResult } from '../types/physics.types';
 import type { Bounds } from '../types/game.types';
-import { TILE_SIZE, PHYSICS_EPSILON, GRAVITY } from '@utils/constants';
+import {
+  TILE_SIZE,
+  PHYSICS_EPSILON,
+  GRAVITY,
+  MAX_FALL_SPEED,
+  MAX_JUMP_SPEED,
+} from '@utils/constants';
 
 /**
  * Custom physics system for precise platformer physics
@@ -78,12 +84,18 @@ export class PhysicsSystem {
     tilemap: Phaser.Tilemaps.Tilemap,
     layer: Phaser.Tilemaps.TilemapLayer
   ): void {
-    // Aplicar gravedad antes de resolver colisiones
-    body.velocity.y += GRAVITY * (1 / 60); // Asumiendo 60 FPS
-
-    // Reset estado grounded al inicio de cada frame
+    // Guardar el estado anterior y resetear grounded
     const wasGrounded = body.grounded;
     body.grounded = false;
+
+    // La gravedad ya se aplica en el PhysicsComponent, no la aplicamos aquí
+
+    // Asegurarnos de que la velocidad vertical esté dentro de los límites
+    if (body.velocity.y > MAX_FALL_SPEED) {
+      body.velocity.y = MAX_FALL_SPEED; // Limitar velocidad de caída (Y+ es abajo)
+    } else if (body.velocity.y < MAX_JUMP_SPEED) {
+      body.velocity.y = MAX_JUMP_SPEED; // Limitar velocidad de subida (Y- es arriba)
+    }
 
     // Calcular la próxima posición basada en la velocidad
     const nextPosition = {
@@ -132,17 +144,17 @@ export class PhysicsSystem {
         const overlapTop = nextBounds.y + nextBounds.height - tileBounds.y;
         const overlapBottom = tileBounds.y + tileBounds.height - nextBounds.y;
 
-        // Colisión vertical
+        // Detección de colisión vertical basada en la velocidad y el solapamiento
         if (body.velocity.y > 0 && overlapTop > 0 && overlapTop < overlapBottom) {
-          // Colisión con el suelo
+          // Colisión con el suelo (cuando velocidad.y > 0 estamos cayendo)
           nextPosition.y = tileBounds.y - body.size.height / 2;
           body.velocity.y = 0;
           body.grounded = true;
           verticalCollision = true;
         } else if (body.velocity.y < 0 && overlapBottom > 0 && overlapBottom < overlapTop) {
-          // Colisión con el techo
+          // Colisión con el techo (cuando velocidad.y < 0 estamos subiendo)
           nextPosition.y = tileBounds.y + TILE_SIZE + body.size.height / 2;
-          body.velocity.y = 0;
+          body.velocity.y = 50; // Dar un pequeño impulso hacia abajo al golpear el techo
           verticalCollision = true;
         }
       }
@@ -203,6 +215,9 @@ export class PhysicsSystem {
       };
 
       if (this.checkAABBCollision(horizontalTestBounds, tileBounds)) {
+        // Guardar la velocidad Y actual
+        const currentVelocityY = body.velocity.y;
+
         if (body.velocity.x > 0) {
           // Colisión con pared derecha
           nextPosition.x = tileBounds.x - body.size.width / 2;
@@ -210,7 +225,11 @@ export class PhysicsSystem {
           // Colisión con pared izquierda
           nextPosition.x = tileBounds.x + TILE_SIZE + body.size.width / 2;
         }
+
+        // Solo resetear velocidad X, mantener velocidad Y
         body.velocity.x = 0;
+        body.velocity.y = currentVelocityY;
+
         hasHorizontalCollision = true;
         break;
       }

@@ -36,6 +36,12 @@ export class Player extends Entity {
       GameConfig.PLAYER.SIZE.height
     );
 
+    // Inicializar con velocidad 0 y estado grounded=false
+    this.physics.velocity = { x: 0, y: 0 };
+    this.physics.grounded = false;
+    this.movement.velocity = { x: 0, y: 0 };
+    this.movement.grounded = false;
+
     this.jumpBufferTime = 0;
     this.facingRight = true;
 
@@ -49,26 +55,26 @@ export class Player extends Entity {
     // Update input manager
     this.inputManager.update(time);
 
-    // Handle input
+    // Actualizar estado del movimiento
     this.handleMovementInput(delta);
     this.handleJumpInput(delta);
-
-    // Update movement component
     this.movement.updateCoyoteTime(delta);
 
-    // Apply physics (gravity)
-    this.physics.applyGravity(delta);
-
-    // Update velocity from movement component
+    // Actualizar velocidades desde el componente de movimiento ANTES de aplicar gravedad
     this.physics.velocity.x = this.movement.velocity.x;
     this.physics.velocity.y = this.movement.velocity.y;
 
-    // CRITICAL FIX: Update position BEFORE collision resolution
-    // This allows the collision system to correct the position
+    // Apply physics (gravity and velocity limits)
+    // Always apply gravity unless grounded, regardless of velocity
+    if (!this.physics.grounded) {
+      this.physics.applyGravity(delta);
+    }
+
+    // CRITICAL FIX: Actualizar posición ANTES de la resolución de colisiones
     this.physics.updatePosition(delta);
 
-    // NOTE: Collision resolution happens in GameScene.handleCollisions()
-    // After collision, sprite position is synced in syncSpritePosition()
+    // La resolución de colisiones ocurre en GameScene.handleCollisions()
+    // Después, la posición del sprite se sincroniza en syncSpritePosition()
 
     // Update sprite facing direction
     if (this.physics.velocity.x > 0 && !this.facingRight) {
@@ -102,24 +108,28 @@ export class Player extends Entity {
   }
 
   private handleJumpInput(delta: number): void {
-    // Jump button pressed
-    if (this.inputManager.justPressed(InputActions.JUMP)) {
+    // Jump button pressed - solo permitir el buffer si podemos saltar
+    if (this.inputManager.justPressed(InputActions.JUMP) && this.movement.canJump()) {
       this.jumpBufferTime = GameConfig.PLAYER.JUMP_BUFFER_MS;
     }
 
-    // Execute jump if buffer is active and can jump
+    // Ejecutar el salto si el buffer está activo y podemos saltar
     if (this.jumpBufferTime > 0 && this.movement.canJump()) {
       this.performJump();
       this.jumpBufferTime = 0;
+      // Asegurarnos de que perdemos el estado grounded al saltar
+      this.physics.grounded = false;
+      this.movement.grounded = false;
     }
 
-    // Variable jump height - release jump button early for shorter jump
+    // Salto variable - soltar el botón de salto para un salto más corto
     if (
       this.inputManager.justReleased(InputActions.JUMP) &&
-      this.physics.velocity.y < 0 &&
+      this.physics.velocity.y > 0 && // Estamos subiendo (Y positivo es arriba)
       !this.physics.grounded
     ) {
-      this.physics.velocity.y *= 0.5; // Cut jump velocity in half
+      // Reducir la velocidad vertical para un salto más corto
+      this.physics.velocity.y = this.physics.velocity.y * 0.5;
       this.movement.velocity.y = this.physics.velocity.y;
     }
   }

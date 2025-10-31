@@ -14,7 +14,10 @@ export const COLLISION_CATEGORY = {
 } as const;
 
 export const PHYSICS_EPSILON = 0.001;
-export const GRAVITY = 980; // pixels per second squared
+export const GRAVITY = -980; // Negative pulls down (Y+ is up)
+export const MAX_FALL_SPEED = 200; // Terminal velocity when falling (negative)
+export const MAX_JUMP_SPEED = -200; // Maximum jump velocity (positive)
+export const JUMP_FORCE = 400; // Initial jump velocity (positive)
 
 export const ANIMATION_FRAME_RATE = {
   IDLE: 8,

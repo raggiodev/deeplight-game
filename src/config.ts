@@ -11,15 +11,15 @@ export const GameConfig = {
   PIXEL_ART: true,
 
   // Physics settings
-  GRAVITY: 980,
-  MAX_VELOCITY_Y: 800,
+  GRAVITY: -980, // Negative pulls down (Y+ is up)
+  MAX_VELOCITY_Y: 400,
 
   // Player settings
   PLAYER: {
     ACCELERATION: 1000,
     MAX_SPEED: 250,
     FRICTION: 1000,
-    JUMP_VELOCITY: -500,
+    JUMP_VELOCITY: 400, // Positive makes player go up
     COYOTE_TIME_MS: 100, // 6 frames at 60fps
     JUMP_BUFFER_MS: 100,
     SIZE: { width: 32, height: 48 },

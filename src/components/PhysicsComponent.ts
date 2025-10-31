@@ -1,9 +1,10 @@
 import type { PhysicsBody } from '../types/physics.types';
 import { GameConfig } from '@/config';
+import { MAX_FALL_SPEED, MAX_JUMP_SPEED } from '@utils/constants';
 
 /**
  * Physics component - handles gravity and physics properties
- * FIXED: Removed conditional gravity and position update logic
+ * FIXED: Added proper velocity limits for new coordinate system
  */
 export class PhysicsComponent implements PhysicsBody {
   public velocity: { x: number; y: number };
@@ -28,21 +29,31 @@ export class PhysicsComponent implements PhysicsBody {
     this.grounded = false;
     this.onWall = false;
     this.gravity = gravity;
+
+    // Asegurarnos de que la velocidad inicial sea 0
+    this.velocity.y = 0;
   }
 
   /**
-   * Apply gravity - FIXED: Always apply gravity, collision system will handle stopping
+   * Apply gravity and limit velocities
    */
   applyGravity(delta: number): void {
     const deltaSeconds = delta / 1000;
 
-    // CRITICAL FIX: Apply gravity unconditionally
-    // The collision system will zero out velocity.y when grounded
-    this.velocity.y += this.gravity * deltaSeconds;
+    // Always apply gravity if not grounded
+    if (!this.grounded) {
+      // Apply gravity (negative accelerates downward)
+      this.velocity.y += this.gravity * deltaSeconds;
 
-    // Cap fall speed
-    if (this.velocity.y > GameConfig.MAX_VELOCITY_Y) {
-      this.velocity.y = GameConfig.MAX_VELOCITY_Y;
+      // Limit vertical velocity
+      if (this.velocity.y < MAX_FALL_SPEED) {
+        this.velocity.y = MAX_FALL_SPEED; // Cap falling speed (negative)
+      } else if (this.velocity.y > MAX_JUMP_SPEED) {
+        this.velocity.y = MAX_JUMP_SPEED; // Cap jump speed (positive)
+      }
+    } else {
+      // When grounded, zero out vertical velocity
+      this.velocity.y = 0;
     }
   }
 
